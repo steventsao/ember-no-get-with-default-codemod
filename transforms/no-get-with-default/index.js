@@ -5,7 +5,7 @@ const GET_WITH_DEFAULT = 'getWithDefault';
 
 module.exports = function transformer(file, api) {
   const j = getParser(api);
-  function convertToConditionalExpression(path) {
+  function transformGetWithDefaultOnThisExpression(path) {
     const [key, value] = path.value.arguments;
     return j.conditionalExpression(
       j.binaryExpression(
@@ -17,8 +17,23 @@ module.exports = function transformer(file, api) {
       value
     );
   }
+  function transformStandAloneEmberGetWithDefault(path) {
+    console.log({ path });
+    const [obj, key, value] = path.value.arguments;
+    return j.conditionalExpression(
+      j.binaryExpression(
+        '!==',
+        j.callExpression(j.identifier('get'), [obj, key]),
+        j.identifier('undefined')
+      ),
+      j.callExpression(j.identifier('get'), [obj, key]),
+      value
+    );
+  }
 
-  return j(file.source)
+  const output = j(file.source);
+  // TODO confirm it's from THIS
+  output
     .find(j.CallExpression, {
       callee: {
         type: 'MemberExpression',
@@ -28,6 +43,16 @@ module.exports = function transformer(file, api) {
         },
       },
     })
-    .replaceWith(convertToConditionalExpression)
-    .toSource();
+    .replaceWith(transformGetWithDefaultOnThisExpression);
+
+  output
+    .find(j.CallExpression, {
+      callee: {
+        type: 'Identifier',
+        name: GET_WITH_DEFAULT,
+      },
+    })
+    .replaceWith(transformStandAloneEmberGetWithDefault);
+
+  return output.toSource();
 };
