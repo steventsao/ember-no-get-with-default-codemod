@@ -1,1 +1,0 @@
-const test = this.getWithDefault('key', 'default').includes('blah');
