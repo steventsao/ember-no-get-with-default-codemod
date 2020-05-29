@@ -1,1 +1,1 @@
-const test = this.getWithDefault('key', 'default');
+const test = this.getWithDefault("key", "default");

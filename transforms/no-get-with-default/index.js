@@ -6,19 +6,17 @@ module.exports = function transformer(file, api) {
   const j = getParser(api);
   const options = getOptions();
   function convertToConditionalExpression(path) {
-    if (path.value.callee.property && path.value.callee.property.name === GET_WITH_DEFAULT) {
-      const args = path.value.arguments.slice();
+    const [key, value] = path.value.arguments.slice();
 
-      return j.conditionalExpression(
-        j.binaryExpression(
-          '===',
-          j.callExpression(j.identifier('get'), [j.thisExpression(), j.literal('key')]),
-          j.identifier('undefined')
-        ),
+    return j.conditionalExpression(
+      j.binaryExpression(
+        '===',
         j.callExpression(j.identifier('get'), [j.thisExpression(), j.literal('key')]),
-        j.literal('default')
-      );
-    }
+        j.identifier('undefined')
+      ),
+      j.callExpression(j.identifier('get'), [j.thisExpression(), j.literal('key')]),
+      j.literal('default')
+    );
   }
   function transformStandaloneGet(source) {
     let emberObjectImport = j(source).find(j.ImportDeclaration, {
@@ -55,20 +53,27 @@ module.exports = function transformer(file, api) {
     }
   }
   let sourceCode = j(file.source)
-    .find(j.CallExpression)
+    .find(
+      j.CallExpression,
+      (path) =>
+        path.value &&
+        path.value.callee.property &&
+        path.value.callee.property.name === GET_WITH_DEFAULT
+    )
     .replaceWith(convertToConditionalExpression)
     .toSource();
+
   let needsGetImport = false;
 
-  j(sourceCode)
+  j(file.source)
     .find(j.CallExpression)
     .forEach((p) => {
-      if (p.value.callee.name === 'get') {
+      if (p.value && p.value.callee.name === 'get') {
         needsGetImport = true;
       }
     });
   if (needsGetImport) {
-    sourceCode = transformStandaloneGet(sourceCode).toSource();
+    // sourceCode = transformStandaloneGet(sourceCode).toSource();
   }
 
   return sourceCode;
