@@ -56,5 +56,40 @@ module.exports = function transformer(file, api) {
     })
     .replaceWith(transformStandAloneEmberGetWithDefault);
 
+  const hasEmberGet = !!output.find(j.CallExpression, {
+    callee: {
+      type: 'Identifier',
+      name: 'get',
+    },
+  }).length;
+  const emberObjectImports = output.find(j.ImportDeclaration, {
+    source: {
+      type: 'StringLiteral',
+      value: '@ember/object',
+    },
+  });
+  const hasImportGet = !!emberObjectImports.find(j.Identifier, { name: 'get' }).length;
+
+  if (hasEmberGet) {
+    const importSpecifierGet = j.importSpecifier(j.identifier('get'));
+
+    if (emberObjectImports.length) {
+      if (!hasImportGet) {
+        emberObjectImports.get('specifiers').push(importSpecifierGet);
+      }
+    } else {
+      const importStatement = j.importDeclaration([importSpecifierGet], j.literal('@ember/object'));
+      const body = output.get().value.program.body;
+
+      body.unshift(importStatement);
+    }
+  }
+
+  emberObjectImports.find(j.ImportSpecifier).forEach((nodePath) => {
+    if (nodePath.node.imported.name === GET_WITH_DEFAULT) {
+      j(nodePath).remove();
+    }
+  });
+
   return output.toSource();
 };
