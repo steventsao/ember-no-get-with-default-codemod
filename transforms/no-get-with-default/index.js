@@ -6,11 +6,16 @@ const GET_WITH_DEFAULT = 'getWithDefault';
 module.exports = function transformer(file, api) {
   const j = getParser(api);
   const output = j(file.source);
+  const options = getOptions();
+  let emberObjectImports;
 
   function transformGetWithDefaultOnMemberExpression(path) {
     const [key, value] = path.value.arguments;
     const obj = path.value.callee.object;
 
+    if (options.nullishCoalescing) {
+      return j.logicalExpression('??', j.callExpression(j.identifier('get'), [obj, key]), value);
+    }
     return j.conditionalExpression(
       j.binaryExpression(
         '!==',
@@ -23,6 +28,10 @@ module.exports = function transformer(file, api) {
   }
   function transformStandAloneEmberGetWithDefault(path) {
     const [obj, key, value] = path.value.arguments;
+
+    if (options.nullishCoalescing) {
+      return j.logicalExpression('??', j.callExpression(j.identifier('get'), [obj, key]), value);
+    }
 
     return j.conditionalExpression(
       j.binaryExpression(
@@ -62,7 +71,7 @@ module.exports = function transformer(file, api) {
       name: 'get',
     },
   }).length;
-  const emberObjectImports = output.find(j.ImportDeclaration, {
+  emberObjectImports = output.find(j.ImportDeclaration, {
     source: {
       type: 'StringLiteral',
       value: '@ember/object',
