@@ -40,6 +40,12 @@ const test2 = (get(obj, 'key') !== undefined ? get(obj, 'key') : 'default').incl
 * change into the repo directory
 * `yarn`
 
+### Options
+```js
+--comment-nullish-coalescing // Add leading comments to encourage migration. This is suitable for codebase that has not adopted the syntax yet.
+--nullish-coalescing // Transform to include nullish coalescing operator
+```
+
 ### Running tests
 
 * `yarn test`

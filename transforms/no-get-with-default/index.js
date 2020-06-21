@@ -1,5 +1,9 @@
 const { getParser } = require('codemod-cli').jscodeshift;
 const { getOptions } = require('codemod-cli');
+const {
+  transformGetWithDefaultOnMemberExpression,
+  transformStandAloneEmberGetWithDefault,
+} = require('./utils.js');
 
 const GET_WITH_DEFAULT = 'getWithDefault';
 
@@ -8,41 +12,6 @@ module.exports = function transformer(file, api) {
   const output = j(file.source);
   const options = getOptions();
   let emberObjectImports;
-
-  function transformGetWithDefaultOnMemberExpression(path) {
-    const [key, value] = path.value.arguments;
-    const obj = path.value.callee.object;
-
-    if (options.nullishCoalescing) {
-      return j.logicalExpression('??', j.callExpression(j.identifier('get'), [obj, key]), value);
-    }
-    return j.conditionalExpression(
-      j.binaryExpression(
-        '!==',
-        j.callExpression(j.identifier('get'), [obj, key]),
-        j.identifier('undefined')
-      ),
-      j.callExpression(j.identifier('get'), [obj, key]),
-      value
-    );
-  }
-  function transformStandAloneEmberGetWithDefault(path) {
-    const [obj, key, value] = path.value.arguments;
-
-    if (options.nullishCoalescing) {
-      return j.logicalExpression('??', j.callExpression(j.identifier('get'), [obj, key]), value);
-    }
-
-    return j.conditionalExpression(
-      j.binaryExpression(
-        '!==',
-        j.callExpression(j.identifier('get'), [obj, key]),
-        j.identifier('undefined')
-      ),
-      j.callExpression(j.identifier('get'), [obj, key]),
-      value
-    );
-  }
 
   output
     .find(j.CallExpression, {
@@ -54,7 +23,7 @@ module.exports = function transformer(file, api) {
         },
       },
     })
-    .replaceWith(transformGetWithDefaultOnMemberExpression);
+    .replaceWith((path) => transformGetWithDefaultOnMemberExpression(path, j, options));
 
   output
     .find(j.CallExpression, {
@@ -63,7 +32,7 @@ module.exports = function transformer(file, api) {
         name: GET_WITH_DEFAULT,
       },
     })
-    .replaceWith(transformStandAloneEmberGetWithDefault);
+    .replaceWith((path) => transformStandAloneEmberGetWithDefault(path, j, options));
 
   const hasEmberGet = !!output.find(j.CallExpression, {
     callee: {
