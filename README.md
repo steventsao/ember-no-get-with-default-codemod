@@ -53,7 +53,8 @@ const test2 = (get(obj, 'key') !== undefined ? get(obj, 'key') : 'default').incl
 * `node --inspect-brk ./node_modules/.bin/jest --runInBand`
 
 ### Limitation
-- [ ] Does not add import 'get' when it's missing
+- [x] Does not add import 'get' when it's missing
+- [x] Add transform to nullish coalescing
 
 ### References
 * [no-get-with-default RFC](https://github.com/ember-cli/eslint-plugin-ember/blob/master/docs/rules/no-get-with-default.md)
