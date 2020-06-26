@@ -1,5 +1,5 @@
 function getDynamicComment(code) {
-  return `TODO rewrite with \`${code}\` if result can be null`;
+  return ` TODO rewrite with \`${code}\` if result can be null`;
 }
 
 function getTopLevelNodePath(path, lastPath) {
@@ -20,10 +20,13 @@ function transformGetWithDefaultOnMemberExpression(path, j, options) {
       j.logicalExpression('??', j.callExpression(j.identifier('get'), [obj, key]), value)
     ).toSource();
     const comment = j.commentLine(getDynamicComment(codeSource), true, false);
-
     const topLevelNodePath = getTopLevelNodePath(path);
 
-    topLevelNodePath.node.comments = [comment];
+    if (topLevelNodePath.node.comments && topLevelNodePath.node.comments.length) {
+      topLevelNodePath.node.comments = [...topLevelNodePath.node.comments, comment];
+    } else {
+      topLevelNodePath.node.comments = [comment];
+    }
   }
   if (options.nullishCoalescing) {
     return j.logicalExpression('??', j.callExpression(j.identifier('get'), [obj, key]), value);
