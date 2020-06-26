@@ -1,6 +1,6 @@
 {
   "name": "ember-no-get-with-default-codemod",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "scripts": {
     "lint": "eslint --cache .",
     "test": "codemod-cli test",

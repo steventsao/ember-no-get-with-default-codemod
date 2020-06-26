@@ -45,10 +45,17 @@ function transformStandAloneEmberGetWithDefault(path, j, options) {
   const [obj, key, value] = path.value.arguments;
 
   if (options.commentNullishCoalescing) {
-    const comment = j.commentLine(MIGRATION_MSG, true, false);
+    const codeSource = j(
+      j.logicalExpression('??', j.callExpression(j.identifier('get'), [obj, key]), value)
+    ).toSource();
+    const comment = j.commentLine(getDynamicComment(codeSource), true, false);
     const topLevelNodePath = getTopLevelNodePath(path);
 
-    topLevelNodePath.node.comments = [comment];
+    if (topLevelNodePath.node.comments && topLevelNodePath.node.comments.length) {
+      topLevelNodePath.node.comments = [...topLevelNodePath.node.comments, comment];
+    } else {
+      topLevelNodePath.node.comments = [comment];
+    }
   }
 
   if (options.nullishCoalescing) {
