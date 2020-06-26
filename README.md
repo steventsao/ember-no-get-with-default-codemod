@@ -62,6 +62,27 @@ const test5 = get(obj, `foo.${key}`) ?? [];
 
 <!--TRANSFORMS_END-->
 
+<!--TRANSFORMS_START-->
+
+Before comment nullish coalescing
+
+```js
+const test = obj.getWithDefault('key', 'default');
+const test2 = obj.getWithDefault('key', 'default').includes('blah');
+```
+
+After
+
+```js
+import { get } from '@ember/object';
+//TODO rewrite with `get(obj, 'key') ?? 'default'` if result can be null
+const test = get(obj, 'key') !== undefined ? get(obj, 'key') : 'default';
+//TODO rewrite with `get(obj, 'key') ?? 'default'` if result can be null
+const test2 = (get(obj, 'key') !== undefined ? get(obj, 'key') : 'default').includes('blah');
+```
+
+<!--TRANSFORMS_END-->
+
 ## Contributing
 
 ### Installation
@@ -73,8 +94,11 @@ const test5 = get(obj, `foo.${key}`) ?? [];
 ### Options
 
 ```sh
---comment-nullish-coalescing # Add leading comments to encourage migration. This is suitable for codebase that has not adopted the syntax yet.
---nullish-coalescing # Transform to include nullish coalescing operator
+ # Add leading comments to encourage migration. This is suitable for codebase that has not adopted the syntax yet.
+--comment-nullish-coalescing
+
+ # Transform to include nullish coalescing operator
+--nullish-coalescing
 ```
 
 ### Running tests
