@@ -1,4 +1,6 @@
-const MIGRATION_MSG = 'TODO rewrite with nullish coalescing operator if result can be null';
+function getDynamicComment(code) {
+  return `TODO rewrite with \`${code}\` if result can be null`;
+}
 
 function getTopLevelNodePath(path, lastPath) {
   lastPath = lastPath || path;
@@ -14,7 +16,11 @@ function transformGetWithDefaultOnMemberExpression(path, j, options) {
   const obj = path.value.callee.object;
 
   if (options.commentNullishCoalescing) {
-    const comment = j.commentLine(MIGRATION_MSG, true, false);
+    const codeSource = j(
+      j.logicalExpression('??', j.callExpression(j.identifier('get'), [obj, key]), value)
+    ).toSource();
+    const comment = j.commentLine(getDynamicComment(codeSource), true, false);
+
     const topLevelNodePath = getTopLevelNodePath(path);
 
     topLevelNodePath.node.comments = [comment];
